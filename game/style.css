@@ -1,0 +1,214 @@
+/* VICE HARBOR — neon dusk styling.
+   Original CSS for an original game: hot pink and cyan over a deep
+   purple night, like the last half hour of a harbor sunset. */
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  font-family: "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: #ffeef8;
+  background:
+    radial-gradient(900px 480px at 12% -10%, rgba(255, 46, 136, 0.30), transparent 60%),
+    radial-gradient(900px 520px at 92% -10%, rgba(55, 224, 255, 0.22), transparent 60%),
+    linear-gradient(180deg, #1d0733 0%, #130423 55%, #0a0214 100%);
+}
+
+#frame {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 18px 14px 26px;
+}
+
+/* ---------- HUD bar ---------- */
+
+#hud {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid #ff2e88;
+  border-radius: 12px;
+  background: linear-gradient(90deg, rgba(64, 6, 44, 0.92), rgba(10, 2, 32, 0.94));
+  box-shadow: 0 0 18px rgba(255, 46, 136, 0.45), inset 0 0 24px rgba(55, 224, 255, 0.08);
+}
+
+#hud-logo {
+  display: flex;
+  align-items: center;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #ffd94d;
+  text-shadow: 0 0 10px rgba(255, 46, 136, 0.9), 0 2px 0 #b3125f;
+  padding-right: 6px;
+  white-space: nowrap;
+}
+
+.hud-cell {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 86px;
+  padding: 2px 10px;
+  border-left: 1px solid rgba(55, 224, 255, 0.25);
+}
+
+.hud-wide { flex: 1 1 auto; min-width: 180px; }
+
+.hud-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #37e0ff;
+}
+
+#hud-cash { font-size: 20px; font-weight: 800; color: #7dff9a; }
+#hud-stars { font-size: 19px; letter-spacing: 2px; color: #ffd94d; text-shadow: 0 0 8px rgba(255, 217, 77, 0.7); }
+#hud-mission { font-size: 14px; font-weight: 600; color: #ffeef8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#hud-speed { font-size: 20px; font-weight: 800; color: #37e0ff; }
+
+/* ---------- Stage, canvas, message pill ---------- */
+
+#stage {
+  position: relative;
+  margin-top: 12px;
+  border: 1px solid rgba(55, 224, 255, 0.55);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 0 22px rgba(55, 224, 255, 0.25), 0 18px 40px rgba(0, 0, 0, 0.55);
+  background: #0b1026;
+}
+
+#game-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #0b1026;
+}
+
+#hud-msg {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 86%;
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 217, 77, 0.8);
+  background: rgba(20, 4, 30, 0.88);
+  color: #ffd94d;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-align: center;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+  z-index: 5;
+}
+
+#hud-msg.hidden-msg { opacity: 0; }
+
+/* ---------- Overlays and cards ---------- */
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+  background: rgba(10, 2, 22, 0.55);
+  z-index: 10;
+}
+
+.overlay.hidden { display: none; }
+
+.card {
+  max-width: 560px;
+  width: 100%;
+  text-align: center;
+  padding: 30px 36px 34px;
+  border-radius: 16px;
+  border: 2px solid #ff2e88;
+  background: linear-gradient(165deg, rgba(46, 6, 54, 0.96), rgba(12, 2, 30, 0.97));
+  box-shadow: 0 0 34px rgba(255, 46, 136, 0.5), 0 0 90px rgba(55, 224, 255, 0.22), inset 0 0 40px rgba(55, 224, 255, 0.06);
+}
+
+.card.bad { border-color: #ff4747; box-shadow: 0 0 34px rgba(255, 71, 71, 0.55), inset 0 0 40px rgba(255, 71, 71, 0.07); }
+.card.good { border-color: #37e0ff; box-shadow: 0 0 34px rgba(55, 224, 255, 0.5), inset 0 0 40px rgba(55, 224, 255, 0.08); }
+
+.card-kicker {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: #37e0ff;
+}
+
+.card h1 {
+  margin: 8px 0 10px;
+  font-size: 54px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: 3px;
+  color: #ffd94d;
+  text-shadow: 0 0 14px rgba(255, 46, 136, 0.85), 0 3px 0 #b3125f, 0 6px 22px rgba(0, 0, 0, 0.6);
+}
+
+.card.bad h1 { color: #ff6b6b; text-shadow: 0 0 14px rgba(255, 71, 71, 0.8), 0 3px 0 #7d1010; }
+.card.good h1 { color: #7dff9a; text-shadow: 0 0 14px rgba(55, 224, 255, 0.8), 0 3px 0 #0f6e4a; }
+
+.tagline { font-size: 17px; line-height: 1.45; color: #ffd7ec; margin: 4px 0 14px; }
+.card p { line-height: 1.5; }
+.hint { font-size: 13.5px; color: #b9a8d9; }
+
+.controls {
+  list-style: none;
+  margin: 0 auto 14px;
+  padding: 12px 16px;
+  max-width: 430px;
+  text-align: left;
+  border: 1px solid rgba(55, 224, 255, 0.3);
+  border-radius: 10px;
+  background: rgba(6, 10, 34, 0.6);
+  font-size: 14.5px;
+  line-height: 1.85;
+}
+
+.controls b { color: #37e0ff; }
+
+.card button {
+  margin-top: 10px;
+  padding: 13px 30px;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #1a0212;
+  background: linear-gradient(180deg, #ffd94d, #ff9a3d);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 0 18px rgba(255, 154, 61, 0.65), 0 4px 0 #a34d00;
+}
+
+.card button:hover { filter: brightness(1.08); }
+.card button:active { transform: translateY(2px); box-shadow: 0 0 18px rgba(255, 154, 61, 0.65), 0 2px 0 #a34d00; }
+
+#foot {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 12.5px;
+  letter-spacing: 0.6px;
+  color: #8f7fb8;
+}
+
+@media (max-width: 720px) {
+  #hud { flex-wrap: wrap; }
+  #hud-logo { width: 100%; }
+  .card h1 { font-size: 38px; }
+  .hud-wide { min-width: 140px; }
+}
