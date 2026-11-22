@@ -2,70 +2,61 @@
 
 ## Premise
 
-Sunset County, dusk. You are the courier every crew in Vice Harbor
-calls when a package has to move and nobody wants their own name on
-it. The city is yours to cross — avenues, back blocks, the Neon Docks
-on the south shore — but the sheriff's department keeps score in
-stars, and every star brings another cruiser onto the street.
+Vice Harbor is a tiny top-down open-world crime game set in Sunset County, a
+neon dusk harbor city of avenues, palm trees and lit windows. You are a
+courier with a borrowed coupe and three jobs to close before the night is
+yours: a package run to the Neon Docks, a cool-down dash to the safehouse
+with three stars on your tail, and a timed crate route across town. Bank
+$2,450, keep the wheels turning, and never let a cruiser pin you against
+the curb.
 
 ## How it plays
 
-- **Walk or drive.** On foot you cross the city at a jog. Press **E**
-  next to any car — yours, parked, or rolling in traffic — to take
-  the wheel; press **E** again to step out.
-- **Follow the beacon.** Each job marks its next step with a golden
-  pillar of light and an edge arrow with the distance when it is
-  off-screen. Drive (or walk) into the ring to advance the job.
-- **Mind the stars.** Clipping traffic, knocking down a pedestrian,
-  lifting a package, or boosting a stranger's car all raise your
-  wanted level, one star at a time. Police cruisers spawn to match
-  the heat and chase you down. Break their line of sight and keep it
-  broken, and the stars cool off one by one.
-- **Don't get pinned.** A cruiser in contact while you are barely
-  moving fills the bust meter. Let it fill and the night ends in
-  handcuffs, a fine, and a long walk from the safehouse.
+- **Move / drive** — WASD or arrow keys.
+- **Enter or exit a car** — E, next to any car. Boosting a ride adds a star.
+- **Handbrake** — Space. **Start / restart** — Enter or the on-screen button.
+- Follow the golden beacon (an edge arrow with distance when it is
+  off-screen) to each job stage.
 
 ## Systems
 
-- **Driving.** A simple arcade model: acceleration, braking and
-  reverse, speed-sensitive steering, a handbrake, and circle-versus-
-  building collision with a bounce. Cars are drawn from primitives —
-  body, glass, wheels, headlights — and the hero coupe is teal so it
-  is always findable in traffic.
-- **Traffic.** Civilian cars drive the road grid lane by lane,
-  choosing straight / left / right at each intersection and braking
-  for the car ahead. Parked cars line the avenues, and every one of
-  them can be taken.
-- **Wanted & police.** A five-star meter. Incidents add stars on a
-  short cooldown so one scrape is not five stars; cruisers spawn at
-  intersections out of sight to match the current heat, steer after
-  the player, and back off when the heat dies. The bust meter fills
-  while a cruiser is in contact and the player is slow or on foot and
-  cornered.
-- **Missions.** Three jobs scripted as stage lists in the city data:
-  a pickup-and-deliver run to the docks, an escape-and-lie-low job
-  that starts at three stars, and a timed three-crate delivery round.
-  Finishing a job banks its reward and offers the next; finishing the
-  last one leaves the city in free roam.
-- **The city.** A 40×30-tile grid generated from a fixed seed:
-  avenues and streets, procedurally filled building blocks with lit
-  windows, palm-lined dock row, and harbor water to the south.
+- **Driving** — arcade car physics: acceleration, braking and reverse,
+  speed-sensitive steering, handbrake slides, and corner-based collision
+  against buildings, the map edge and the water.
+- **Traffic** — civilian cars cruise the road grid in right-hand lanes,
+  slow for the car ahead, and pick new headings at intersections.
+  Pedestrians stroll the blocks and flee from fast cars.
+- **Wanted & police** — a five-star system. Boosting cars, ramming traffic,
+  clipping pedestrians, hard crashes and grabbing packages all raise heat
+  (with an incident cooldown). One cruiser rolls in per star; cruisers
+  chase and try to pin you. The bust meter fills while a cruiser is in
+  contact and you are crawling — a full meter ends the night. Heat decays
+  one star at a time while no cruiser has eyes on you.
+- **Missions** — three chained jobs with staged objectives: Harbor Run
+  (pickup, then deliver to the Neon Docks, $650), Cool Down (starts at
+  three stars; reach the Sunset Safehouse only once the heat is gone,
+  $800), and Crate Expectations (three deliveries against a 150-second
+  clock, $1,000). Finishing all three wins the night.
+- **Presentation** — follow camera, minimap with mission target and
+  cruisers, HUD (cash, wanted stars, current job, speed), message pill,
+  and start / busted / all-jobs-done cards.
 
 ## Tech
 
-Plain JavaScript and canvas 2D. No frameworks, no libraries, no
-images, no fonts, no network requests — the whole game is four text
-files (`index.html`, `style.css`, `city.js`, `game.js`). The layout
-is deterministic (one fixed seed), which is also what makes the
-screenshot modes below reproducible.
+Plain JavaScript and canvas 2D. Zero assets, zero downloads, zero
+dependencies: the city (40 x 30 tiles of 64 px), its buildings, palms and
+parked cars are generated from a seeded RNG (mulberry32, seed 20261122),
+so the harbor is identical on every load. `main.ts` copies `game/` and
+`screenshots/` into the output directory and writes `dossier.json` with
+the vendored make.fun library.
 
 ## The screenshots
 
-- `1-start.jpg` — the title card over the dusk city: VICE HARBOR, the
-  premise, and the controls, with the lit streets behind it.
-- `2-play.jpg` — live play mid-chase: the hero coupe on the dock road
-  with traffic ahead, a cruiser with flashing lights behind, the
-  mission beacon down the road, and the HUD showing banked cash and
-  two wanted stars.
-- `3-end.jpg` — the mission-complete card over the harbor: jobs done,
-  cash banked, and the night summarized.
+- `1-start.jpg` — title card over the dusk city: the VICE HARBOR start
+  overlay with premise and controls, the Harbor Market streets behind it.
+- `2-play.jpg` — dock-road chase: the player's pink coupe at speed on the
+  boardwalk street, traffic ahead and oncoming, a police cruiser with its
+  light bar on its tail, the golden Neon Docks beacon lit, HUD showing
+  $650 and two wanted stars.
+- `3-end.jpg` — all-jobs-done card: the completion overlay over the docks
+  with the night's totals, $2,450 banked and 3/3 jobs closed.
