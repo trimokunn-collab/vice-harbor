@@ -3,58 +3,87 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>VICE HARBOR — a tiny open-world crime spree</title>
+<title>VICE HARBOR — a tiny top-down crime spree</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="frame">
+
   <header id="hud">
-    <div id="hud-logo">VICE&nbsp;HARBOR</div>
-    <div class="hud-cell"><span class="hud-label">Cash</span><span id="hud-cash">$0</span></div>
-    <div class="hud-cell"><span class="hud-label">Wanted</span><span id="hud-stars">☆☆☆☆☆</span></div>
-    <div class="hud-cell hud-wide"><span class="hud-label">Job</span><span id="hud-mission">No job yet</span></div>
-    <div class="hud-cell"><span class="hud-label">Speed</span><span id="hud-speed">—</span></div>
+    <div class="hud-brand">VICE&nbsp;HARBOR</div>
+    <div class="hud-cell">
+      <span class="hud-label">Cash</span>
+      <span class="hud-value" id="hud-cash">$0</span>
+    </div>
+    <div class="hud-cell">
+      <span class="hud-label">Wanted</span>
+      <span class="hud-value" id="hud-stars" aria-label="wanted level">☆☆☆☆☆</span>
+    </div>
+    <div class="hud-cell hud-job">
+      <span class="hud-label">Job</span>
+      <span class="hud-value" id="hud-job">Find work at the Harbor Market</span>
+    </div>
+    <div class="hud-cell">
+      <span class="hud-label">Speed</span>
+      <span class="hud-value" id="hud-speed">—</span>
+    </div>
   </header>
+
   <div id="stage">
-    <canvas id="game-canvas" width="960" height="600"></canvas>
-    <div id="hud-msg" class="hidden-msg"></div>
+    <canvas id="game" width="1152" height="768"></canvas>
+    <div id="pill" class="hidden"></div>
 
-    <div class="overlay" id="ov-start">
+    <div class="overlay" id="screen-start">
       <div class="card">
-        <div class="card-kicker">Sunset County presents</div>
+        <p class="kicker">SUNSET COUNTY PRESENTS</p>
         <h1>VICE HARBOR</h1>
-        <p class="tagline">One courier, one borrowed coupe, and every cop in the county between you and the docks.</p>
+        <p class="premise">One courier, one borrowed coupe, and every cop in the county
+          between you and the docks. Run the jobs, bank the cash, don't get pinned.</p>
         <ul class="controls">
-          <li><b>W A S D</b> or <b>Arrow keys</b> — walk / drive</li>
-          <li><b>E</b> — get in or out of a car (any car — we won't tell)</li>
-          <li><b>Space</b> — handbrake</li>
-          <li><b>Enter</b> — start the night</li>
+          <li><strong>W A S D</strong> or <strong>Arrow keys</strong> — walk / drive</li>
+          <li><strong>E</strong> — get in or out of a car (any car — we won't tell)</li>
+          <li><strong>Space</strong> — handbrake</li>
+          <li><strong>Enter</strong> — start the night</li>
         </ul>
-        <p class="hint">Follow the golden beacon to each job. Bank cash, keep the wheels turning, and never let a cruiser pin you while you are crawling — that is how you get busted.</p>
-        <button id="btn-start" type="button">Start the night</button>
+        <p class="tip">Follow the golden beacon to each job. A cruiser that pins you
+          while you crawl fills the bust meter — keep the wheels turning.</p>
+        <button class="cta" id="btn-start">Start the night</button>
       </div>
     </div>
 
-    <div class="overlay hidden" id="ov-busted">
-      <div class="card bad">
-        <div class="card-kicker">Sunset County Sheriff</div>
+    <div class="overlay hidden" id="screen-busted">
+      <div class="card card-bad">
+        <p class="kicker">THE HEAT WINS</p>
         <h1>BUSTED</h1>
-        <p id="busted-stats">They finally boxed you in.</p>
-        <button id="btn-retry" type="button">Pay the fine &amp; walk</button>
+        <p class="premise">Pinned against the curb with the sirens in your mirrors.
+          The harbor keeps your cash; the night starts over.</p>
+        <div class="scorebox">
+          <p>Cash banked: <strong id="busted-cash">$0</strong></p>
+          <p>Jobs done: <strong id="busted-jobs">0 / 3</strong></p>
+        </div>
+        <button class="cta" id="btn-retry">Try the night again</button>
       </div>
     </div>
 
-    <div class="overlay hidden" id="ov-done">
-      <div class="card good">
-        <div class="card-kicker">Job complete</div>
-        <h1 id="done-title">JOB DONE</h1>
-        <p id="done-stats"></p>
-        <button id="btn-next" type="button">Take the next job</button>
+    <div class="overlay hidden" id="screen-done">
+      <div class="card card-good">
+        <p class="kicker">EVERY JOB CLOSED</p>
+        <h1>ALL JOBS DONE</h1>
+        <p class="premise">The docks are quiet, the coupe is warm, and Sunset County
+          never got your name. Vice Harbor is yours tonight.</p>
+        <div class="scorebox">
+          <p>Cash banked: <strong id="done-cash">$0</strong></p>
+          <p>Jobs done: <strong id="done-jobs">0 / 3</strong></p>
+          <p>Time on the street: <strong id="done-time">0:00</strong></p>
+        </div>
+        <button class="cta" id="btn-again">Run it again</button>
       </div>
     </div>
   </div>
+
   <footer id="foot">A tiny top-down crime spree in plain JavaScript — no assets, no downloads, just you and the heat.</footer>
 </div>
+
 <script src="city.js"></script>
 <script src="game.js"></script>
 </body>
