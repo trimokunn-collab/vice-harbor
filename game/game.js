@@ -679,7 +679,7 @@ function draw() {
   drawBustMeter();
 }
 
-// ---------- screenshot scenes (one frozen frame, no update loop) ----------
+// ---------- screenshot scenes (one frozen frame, no update loop; play and end hide the start card) ----------
 function setupShot(kindShot) {
   resetWorld();
   traffic = [];
