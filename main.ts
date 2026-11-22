@@ -1,11 +1,9 @@
 // VICE HARBOR — hand-in program for the make.fun gta6-01 bounty.
 //
-// The game is a plain static site in this directory's game/ folder:
-// index.html plus two classic scripts and one stylesheet, no build
-// step, no network. This program's whole job is the hand-in — it
-// copies the game (and the screenshots, when they are present) into
-// the output directory and writes the dossier the judge reads,
-// produced by the vendored make.fun library in ./vendor.
+// The game itself is the static site under game/ (open game/index.html and
+// play). This program is what the grader runs: it copies the game and its
+// screenshots into the output directory and writes the dossier the judge
+// reads, using the vendored make.fun library. Standard library only.
 
 import { cpSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -19,21 +17,19 @@ mkdirSync(out, { recursive: true });
 
 cpSync(join(here, "game"), join(out, "game"), { recursive: true });
 
-const shotsHere = join(here, "screenshots");
-if (existsSync(shotsHere)) {
+const shotsDir = join(here, "screenshots");
+if (existsSync(shotsDir)) {
   mkdirSync(join(out, "screenshots"), { recursive: true });
-  cpSync(shotsHere, join(out, "screenshots"), { recursive: true });
+  cpSync(shotsDir, join(out, "screenshots"), { recursive: true });
 }
 
-writeFileSync(
-  join(out, "dossier.json"),
-  buildDossier(out, {
-    text_max_bytes: 163840,
-    screenshots: { max: 4, max_bytes: 262144 },
-    game_max_files: 993,
-    game_max_bytes: 50331648,
-    game_path_max_bytes: 1000,
-  }),
-);
+const dossier = buildDossier(out, {
+  text_max_bytes: 163840,
+  screenshots: { max: 4, max_bytes: 262144 },
+  game_max_files: 993,
+  game_max_bytes: 50331648,
+  game_path_max_bytes: 1000
+});
+writeFileSync(join(out, "dossier.json"), dossier);
 
-console.log("Vice Harbor handed in: game, screenshots and dossier are in " + out);
+console.log("vice-harbor: game, screenshots and dossier written to " + out);
