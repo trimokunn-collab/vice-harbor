@@ -4,44 +4,42 @@
 [![rank](https://make.fun/badge/gta6-01/trimokunn-collab/vice-harbor/rank.svg)](https://make.fun/bounty/gta6-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
 [![reward](https://make.fun/badge/gta6-01/trimokunn-collab/vice-harbor/reward.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
 
-**Vice Harbor** is a tiny top-down open-world crime game that runs in a
-browser: one courier, one borrowed coupe, a harbor city at dusk, and a
-sheriff's department with nothing better to do. Drive anywhere, boost
-any car, run three jobs for cash, and try not to get pinned by a
-cruiser while your wanted stars are up.
+VICE HARBOR is an original top-down open-world crime game in plain
+JavaScript and canvas 2D — no assets, no downloads, no dependencies.
+Cruise a neon dusk harbor city, boost cars, run three courier jobs for
+$2,450, and stay ahead of a five-star wanted system that would love to
+pin you against the curb.
 
 ## What's inside
 
-- `game/index.html` — the page: HUD bar (cash, wanted stars, current
-  job, speed), the canvas, and the start / busted / mission-complete
-  cards.
-- `game/style.css` — the neon-dusk look: hot pink and cyan over a deep
-  purple night.
-- `game/city.js` — the city itself as data: a seeded, deterministic
-  street grid with avenues, city blocks and buildings, a dock row and
-  harbor water, palm trees, parked cars, named places, and the three
-  mission scripts.
-- `game/game.js` — the engine: canvas 2D rendering with a follow
-  camera, on-foot and driving movement, traffic that drives the road
-  grid, pedestrians, a five-star wanted system with chasing police,
-  mission beacons, and a minimap. No libraries, no assets, no network.
-- `main.ts` — the hand-in program (see below).
-- `DOSSIER.md` — the design notes and screenshot list.
-- `screenshots/` — three captures of the game (added for the bounty).
+- `game/index.html` — the game page: HUD (cash, wanted stars, current
+  job, speed), canvas, and the start / busted / all-jobs-done cards.
+- `game/style.css` — neon-dusk styling: hot pink and cyan over deep
+  purple.
+- `game/city.js` — the city as data: a 40 x 30 tile grid (64 px tiles),
+  road avenues and streets, the dock row and harbor water, buildings,
+  palms and parked cars generated from a seeded RNG (mulberry32, seed
+  20261122), named places, and the three missions.
+- `game/game.js` — the engine: follow camera, on-foot and driving
+  physics, lane-following traffic, fleeing pedestrians, police cruisers
+  and the bust meter, staged missions with a beacon, minimap and HUD.
+  It also carries the `?shot=start|play|end` screenshot modes.
+- `main.ts` — the hand-in program the grader runs.
+- `DOSSIER.md` — premise, controls, systems and screenshot notes.
+- `screenshots/` — three stills from the game (added with the entry).
 
 ## Run it
 
-Play by opening `game/index.html` in a desktop browser (or serving the
-`game/` folder statically). Move with **W A S D** or the arrow keys,
-press **E** to get in and out of cars, and **Space** for the
-handbrake.
+Play by opening `game/index.html` in a browser — WASD or arrows to move,
+E to get in or out of a car, Space for the handbrake.
 
-The hand-in program copies `game/` and `screenshots/` into the output
-directory and writes `dossier.json` there with the vendored make.fun
-library:
+For the bounty hand-in, run the program with Node:
 
 ```sh
-MAKEFUN_OUTPUT_DIR=out node main.ts
+MAKEFUN_OUTPUT_DIR=/output node main.ts
 ```
+
+`main.ts` copies `game/` and `screenshots/` into the output directory
+and writes `dossier.json` there with the vendored make.fun library.
 
 Built by an AI agent for [make.fun](https://make.fun/?utm_source=github&utm_medium=readme&utm_campaign=gta6-01).
