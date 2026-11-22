@@ -1,182 +1,203 @@
-"use strict";
-/* VICE HARBOR — city data.
-   A hand-laid grid city on a harbor: avenues run north-south, streets
-   run east-west, the Neon Docks sit on the south shore. Everything is
-   generated from one fixed seed, so the city is the same on every
-   visit and in every screenshot. Plain globals, no modules. */
+// VICE HARBOR — city data. Plain globals only; game.js reads everything here.
+//
+// The city is a grid of 40 x 30 tiles of 64 px: a 2560 x 1920 world.
+// Avenues run north-south, streets run east-west; between them sit city
+// blocks with buildings. The south edge is the harbor: a wooden dock row
+// (tile row 26), a boardwalk street (row 25) and open water below that.
 
-const VH_TILE = 64;
-const VH_COLS = 40;
-const VH_ROWS = 30;
-const VH_WORLD_W = VH_COLS * VH_TILE;   /* 2560 */
-const VH_WORLD_H = VH_ROWS * VH_TILE;   /* 1920 */
+const TILE = 64;
+const COLS = 40;
+const ROWS = 30;
+const WORLD_W = COLS * TILE;
+const WORLD_H = ROWS * TILE;
 
-/* Deterministic little RNG (mulberry32). */
+// Road tile coordinates. A tile is a road when its column is an avenue
+// or its row is a street.
+const AVENUES = [2, 9, 16, 23, 30, 37];
+const STREETS = [2, 8, 14, 20, 25];
+
+const DOCK_ROW = 26;   // wooden dock planks
+const WATER_ROW = 27;  // rows 27..29 are water
+
+// Seeded RNG (mulberry32) so the city is the same on every load.
 function vhMulberry32(seed) {
-  let a = seed | 0;
+  let a = seed >>> 0;
   return function () {
-    a = (a + 0x6D2B79F5) | 0;
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
     let t = Math.imul(a ^ (a >>> 15), 1 | a);
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-const vhRng = vhMulberry32(20261122);
+const vhRand = vhMulberry32(20261122);
+function vhRange(lo, hi) { return lo + vhRand() * (hi - lo); }
+function vhPick(list) { return list[Math.floor(vhRand() * list.length)]; }
 
-/* The street plan: tile columns / rows that are roads. */
-const VH_ROAD_COLS = [3, 9, 15, 21, 27, 33, 38];
-const VH_ROAD_ROWS = [3, 9, 15, 21, 25];
-const VH_DOCK_ROW = 26;                 /* wooden pier promenade */
-const VH_WATER_ROWS = [27, 28, 29];     /* the harbor itself */
+function isAvenue(tx) { return AVENUES.indexOf(tx) !== -1; }
+function isStreet(ty) { return STREETS.indexOf(ty) !== -1; }
 
-function vhIsRoadCol(tx) { return VH_ROAD_COLS.indexOf(tx) >= 0; }
-function vhIsRoadRow(ty) { return VH_ROAD_ROWS.indexOf(ty) >= 0; }
-
-function vhTileKind(tx, ty) {
-  if (tx < 0 || ty < 0 || tx >= VH_COLS || ty >= VH_ROWS) return "water";
-  if (VH_WATER_ROWS.indexOf(ty) >= 0) return "water";
-  if (ty === VH_DOCK_ROW) return "dock";
-  if (vhIsRoadCol(tx) || vhIsRoadRow(ty)) return "road";
+// Tile kinds: "road", "dock", "water", "block".
+function tileKind(tx, ty) {
+  if (tx < 0 || ty < 0 || tx >= COLS || ty >= ROWS) return "block";
+  if (ty >= WATER_ROW) return "water";
+  if (ty === DOCK_ROW) return "dock";
+  if (isAvenue(tx) || isStreet(ty)) return "road";
   return "block";
 }
+function tileAtPx(x, y) { return tileKind(Math.floor(x / TILE), Math.floor(y / TILE)); }
+function isDrivable(x, y) {
+  const k = tileAtPx(x, y);
+  return k === "road" || k === "dock";
+}
 
-/* City blocks = the rectangles of land between roads. Returned as
-   [firstTile, lastTile] spans along each axis. */
-function vhSpans(count, lines) {
+// Buildings fill the city blocks: the roads cut the map into rectangular
+// blocks, and each block is filled with a grid of buildings (some cells
+// left empty as plazas and parking lots). Palms dot the leftover ground.
+const BUILDING_COLORS = ["#2b1b4d", "#33205a", "#241640", "#3a2563", "#2e1e52", "#402a6b"];
+const ROOF_TRIMS = ["#ff2e88", "#2ee6ff", "#ffc93c", "#7dff9a", "#ff7ab5"];
+
+// Tile spans between two road lines, e.g. avenues at 2 and 9 -> span 3..8.
+function vhSpans(lines, limit) {
   const spans = [];
-  let s = 0;
-  for (const L of lines) {
-    if (L - s >= 1) spans.push([s, L - 1]);
-    s = L + 1;
+  let start = 0;
+  for (const line of lines) {
+    if (line > start) spans.push([start, line - 1]);
+    start = line + 1;
   }
-  if (s <= count - 1) spans.push([s, count - 1]);
+  if (start < limit) spans.push([start, limit - 1]);
   return spans;
 }
-const VH_SPANS_X = vhSpans(VH_COLS, VH_ROAD_COLS);
-const VH_SPANS_Y = vhSpans(27, VH_ROAD_ROWS.concat([VH_DOCK_ROW]));
+const BLOCK_COLS = vhSpans(AVENUES, COLS);
+const BLOCK_ROWS = vhSpans(STREETS.concat([DOCK_ROW]), ROWS);
 
-/* ---------- Buildings ---------- */
-
-const VH_BUILDING_COLORS = ["#2b2d5c", "#3a2b5c", "#243b55", "#40284a", "#1f3a4d", "#513252", "#2e4057", "#37284f"];
-const VH_WINDOW_WARM = "#ffd97a";
-const VH_WINDOW_COOL = "#9be7ff";
-
-const VH_BUILDINGS = [];
-(function buildBlocks() {
-  let seedBump = 0;
-  for (const [x0, x1] of VH_SPANS_X) {
-    for (const [y0, y1] of VH_SPANS_Y) {
-      const wTiles = x1 - x0 + 1;
-      const hTiles = y1 - y0 + 1;
-      if (wTiles < 2 || hTiles < 2) continue;
-      const plotsX = Math.max(1, Math.round(wTiles / 2));
-      const plotsY = Math.max(1, Math.round(hTiles / 2));
-      const pw = (wTiles * VH_TILE) / plotsX;
-      const ph = (hTiles * VH_TILE) / plotsY;
-      for (let i = 0; i < plotsX; i++) {
-        for (let j = 0; j < plotsY; j++) {
-          if (vhRng() < 0.14) continue;   /* plaza / parking gap */
-          const inset = 8 + vhRng() * 8;
-          VH_BUILDINGS.push({
-            x: x0 * VH_TILE + i * pw + inset,
-            y: y0 * VH_TILE + j * ph + inset,
-            w: pw - inset * 2,
-            h: ph - inset * 2,
-            floors: 2 + Math.floor(vhRng() * 8),
-            color: VH_BUILDING_COLORS[Math.floor(vhRng() * VH_BUILDING_COLORS.length)],
-            winSeed: 31007 + (seedBump += 613),
-          });
-        }
+const BUILDINGS = [];
+for (const [ry0, ry1] of BLOCK_ROWS) {
+  for (const [rx0, rx1] of BLOCK_COLS) {
+    for (let cy = ry0; cy <= ry1; cy += 2) {
+      for (let cx = rx0; cx <= rx1; cx += 2) {
+        if (vhRand() < 0.15) continue; // plaza / parking lot
+        const cellW = Math.min(2, rx1 - cx + 1);
+        const cellH = Math.min(2, ry1 - cy + 1);
+        const inset = 7;
+        BUILDINGS.push({
+          x: cx * TILE + inset,
+          y: cy * TILE + inset,
+          w: cellW * TILE - inset * 2,
+          h: cellH * TILE - inset * 2,
+          color: vhPick(BUILDING_COLORS),
+          trim: vhPick(ROOF_TRIMS),
+          floors: 2 + Math.floor(vhRand() * 4),
+          seed: Math.floor(vhRand() * 100000)
+        });
       }
     }
   }
-})();
+}
 
-/* ---------- Palms ---------- */
-
-const VH_PALMS = [];
-(function plantPalms() {
-  for (let tx = 1; tx < VH_COLS; tx += 2) {
-    VH_PALMS.push({ x: tx * VH_TILE + 12, y: VH_DOCK_ROW * VH_TILE + 50 });
+function buildingAt(x, y) {
+  for (const b of BUILDINGS) {
+    if (x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) return b;
   }
-  for (let tx = 2; tx < VH_COLS; tx += 3) {
-    VH_PALMS.push({ x: tx * VH_TILE + 32, y: 25 * VH_TILE - 12 });
-    VH_PALMS.push({ x: tx * VH_TILE + 8, y: 3 * VH_TILE + VH_TILE + 10 });
+  return null;
+}
+// Circle-vs-buildings test used by the player, cars and pedestrians.
+function circleHitsBuilding(x, y, r) {
+  for (const b of BUILDINGS) {
+    const cx = Math.max(b.x, Math.min(x, b.x + b.w));
+    const cy = Math.max(b.y, Math.min(y, b.y + b.h));
+    const dx = x - cx, dy = y - cy;
+    if (dx * dx + dy * dy < r * r) return true;
   }
-})();
+  return false;
+}
 
-/* ---------- Parked cars, intersections, places ---------- */
+const PALMS = [];
+for (let i = 0; i < 90; i++) {
+  const tx = Math.floor(vhRange(0, COLS));
+  const ty = Math.floor(vhRange(0, ROWS));
+  const k = tileKind(tx, ty);
+  if (k !== "block" && k !== "dock") continue;
+  const x = tx * TILE + vhRange(10, TILE - 10);
+  const y = ty * TILE + vhRange(10, TILE - 10);
+  if (buildingAt(x, y)) continue;
+  PALMS.push({ x, y, sway: vhRange(0, Math.PI * 2) });
+}
 
-const VH_CAR_COLORS = ["#e74c3c", "#f39c12", "#9b59b6", "#ecf0f1", "#e84393", "#00b894", "#fdcb6e", "#6c5ce7", "#d63031", "#74b9ff"];
-
-const VH_PARKED = [];
-(function parkCars() {
-  for (const c of VH_ROAD_COLS) {
-    for (let i = 0; i < 3; i++) {
-      const ty = 1 + Math.floor(vhRng() * 24);
-      if (VH_ROAD_ROWS.indexOf(ty) >= 0 || ty === VH_DOCK_ROW) continue;
-      VH_PARKED.push({
-        x: c * VH_TILE + 15,
-        y: ty * VH_TILE + 32,
-        angle: Math.PI / 2,
-        color: VH_CAR_COLORS[Math.floor(vhRng() * VH_CAR_COLORS.length)],
-      });
-    }
+// Parked cars: sitting on road tiles at the curb, ready to be "borrowed".
+const CAR_COLORS = ["#ff2e88", "#2ee6ff", "#ffc93c", "#7dff9a", "#f6ecff", "#ff7a3c", "#9a7dff", "#3cd6ff"];
+const PARKED_SPOTS = [];
+for (const ax of AVENUES) {
+  for (let ty = 0; ty < ROWS; ty++) {
+    if (ty === DOCK_ROW || ty >= WATER_ROW) continue;
+    if (vhRand() < 0.42) continue;
+    PARKED_SPOTS.push({
+      x: (ax + 0.5) * TILE + (vhRand() < 0.5 ? -14 : 14),
+      y: (ty + 0.5) * TILE,
+      angle: Math.PI / 2, // parked parallel to the avenue
+      color: vhPick(CAR_COLORS)
+    });
   }
-})();
-
-const VH_INTERSECTIONS = [];
-for (const c of VH_ROAD_COLS) {
-  for (const r of VH_ROAD_ROWS) {
-    VH_INTERSECTIONS.push({ x: c * VH_TILE + 32, y: r * VH_TILE + 32, col: c, row: r });
+}
+for (const sy of STREETS) {
+  for (let tx = 0; tx < COLS; tx++) {
+    if (vhRand() < 0.55) continue;
+    PARKED_SPOTS.push({
+      x: (tx + 0.5) * TILE,
+      y: (sy + 0.5) * TILE + (vhRand() < 0.5 ? -14 : 14),
+      angle: 0, // parked parallel to the street
+      color: vhPick(CAR_COLORS)
+    });
   }
 }
 
-const VH_PLACES = {
-  market:    { name: "Harbor Market",      x: 9 * VH_TILE + 32,  y: 9 * VH_TILE + 32 },
-  docks:     { name: "Neon Docks",         x: 21 * VH_TILE + 32, y: VH_DOCK_ROW * VH_TILE + 32 },
-  safehouse: { name: "Palm Ave Safehouse", x: 33 * VH_TILE + 32, y: 21 * VH_TILE + 32 },
-  garage:    { name: "Westside Garage",    x: 3 * VH_TILE + 32,  y: 15 * VH_TILE + 32 },
-  hotel:     { name: "Hotel Marisol",      x: 27 * VH_TILE + 32, y: 3 * VH_TILE + 32 },
-  start:     { name: "Courthouse Corner",  x: 15 * VH_TILE + 32, y: 21 * VH_TILE + 32 },
-};
+// Named places, in tile coordinates (converted to pixels by PLACES below).
+const PLACE_DEFS = [
+  { name: "Harbor Market", tx: 16, ty: 20 },
+  { name: "Neon Docks", tx: 23, ty: 26 },
+  { name: "The Pink Flamingo", tx: 9, ty: 8 },
+  { name: "Sunset Safehouse", tx: 2, ty: 2 },
+  { name: "Marina Point", tx: 37, ty: 25 },
+  { name: "Crate Warehouse", tx: 30, ty: 14 },
+  { name: "Vice General Hospital", tx: 23, ty: 8 },
+  { name: "Old Town Garage", tx: 9, ty: 20 }
+];
+const PLACES = {};
+for (const p of PLACE_DEFS) {
+  PLACES[p.name] = { name: p.name, x: (p.tx + 0.5) * TILE, y: (p.ty + 0.5) * TILE };
+}
+function place(name) { return PLACES[name]; }
 
-/* ---------- Missions ----------
-   Each mission is a list of stages. A stage is finished by reaching
-   its place (pickup / goto / deliver) or, for "escape", by cooling
-   the wanted level back to zero. addWanted is applied when a stage
-   completes; startWanted is applied when the mission begins;
-   timeLimit (seconds) covers the whole mission. */
-
-const VH_MISSIONS = [
+// The night's work. Each mission is a list of stages; a stage is either a
+// "go" stage (reach the point) with an optional pickup flavour, or a
+// "cooldown" stage (wanted level must reach zero before the point counts).
+const MISSIONS = [
   {
+    id: "harbor-run",
     title: "Harbor Run",
-    brief: "Pick up the package at Harbor Market, then get it to the Neon Docks.",
-    reward: 500,
+    reward: 650,
     stages: [
-      { kind: "pickup", place: "market", label: "Pick up the package at Harbor Market", addWanted: 1 },
-      { kind: "goto", place: "docks", label: "Deliver the package to the Neon Docks" },
-    ],
+      { kind: "go", at: "Harbor Market", label: "Pick up the package at the Harbor Market", pickup: true },
+      { kind: "go", at: "Neon Docks", label: "Deliver the package to the Neon Docks" }
+    ]
   },
   {
+    id: "cool-down",
     title: "Cool Down",
-    brief: "You are hot — three stars hot. Lose the heat, then lie low at the safehouse.",
-    reward: 750,
-    startWanted: 3,
+    reward: 800,
+    startStars: 3,
     stages: [
-      { kind: "escape", label: "Lose the heat (cool down to zero stars)" },
-      { kind: "goto", place: "safehouse", label: "Reach the Palm Ave Safehouse" },
-    ],
+      { kind: "cooldown", at: "Sunset Safehouse", label: "Lose the heat, then reach the Sunset Safehouse" }
+    ]
   },
   {
+    id: "crate-expectations",
     title: "Crate Expectations",
-    brief: "Three crates, three drops, one clock. Move.",
-    reward: 1200,
+    reward: 1000,
     timeLimit: 150,
     stages: [
-      { kind: "deliver", place: "garage", label: "Drop crate 1 at the Westside Garage" },
-      { kind: "deliver", place: "hotel", label: "Drop crate 2 at the Hotel Marisol" },
-      { kind: "deliver", place: "docks", label: "Drop crate 3 at the Neon Docks", addWanted: 1 },
-    ],
-  },
+      { kind: "go", at: "Crate Warehouse", label: "Load the first crate at the Crate Warehouse", pickup: true },
+      { kind: "go", at: "The Pink Flamingo", label: "Drop the crate at The Pink Flamingo" },
+      { kind: "go", at: "Marina Point", label: "Final drop: Marina Point" }
+    ]
+  }
 ];
